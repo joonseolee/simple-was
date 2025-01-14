@@ -26,6 +26,7 @@ phases:   # 빌드 단계
   post_build:
     commands:
       - echo Build completed on `date`
+      - echo $LOGIN_PASSWORD | docker login --username $LOGIN_ID --password-stdin
       - docker push joons/simple-was:latest
 artifacts:
   files:
