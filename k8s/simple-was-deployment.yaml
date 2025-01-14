@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-was
+  labels:
+    app: simple-was
+    profile: "prd"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simple-was
+  template:
+    metadata:
+      labels:
+        app: simple-was
+    spec:
+      terminationGracePeriodSeconds: 60 # default 30s
+      containers:
+        - name: simple-was
+          image: joons/simple-was
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['profile']
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+            httpGet:
+              path: /actuator/health
+              port: 8080
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 10
+            httpGet:
+              path: /actuator/health
+              port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-was-service
+spec:
+  selector:
+    app: simple-was
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: NodePort
