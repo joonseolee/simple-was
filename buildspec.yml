@@ -1,0 +1,36 @@
+version: 0.2  # 0.2 권장
+
+env:
+  variables:
+    SPRING_PROFILE: "prd"
+
+phases:   # 빌드 단계
+  install:
+    runtime-versions:
+      java: corretto17
+  pre_build:
+    commands:
+      - echo Pre-Build completed on `date`
+  build:
+    commands:
+      - chmod +x ./gradlew
+      - echo unit testing ...
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} ./gradlew test
+      - echo make jar ...
+      - ./gradlew assemble
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t joons/simple-was .
+#      - docker build -f Dockerfile -t $REPOSITORY_URI:latest --build-arg JAR_FILE=build/libs/JAR_파일명.jar .
+#      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - docker push joons/simple-was:latest
+artifacts:
+  files:
+    - target/spring-boot-jsp-0.0.1-SNAPSHOT.war  # 업로드 할 파일들
+  discard-paths: yes # 파일명 기준으로만 업로드
+cache:
+  paths:
+    - '/root/.gradle/**/*'
